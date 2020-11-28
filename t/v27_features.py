@@ -3,6 +3,7 @@
 
 import sys
 import time
+from collections import OrderedDict
 sys.path.append('./t')
 from http_utils import *
 
@@ -20,3 +21,88 @@ result = get_success(please_unescape_it + '%7B%7D', {}, {})
 assert(result['uri'] == '/issue_120/{}'), "expected result"
 print ('[+] OK')
 
+print('[+] Garbage fields skipping.')
+preset_method_location = BASE_URL + '/skipping_test'
+exp_res = {u'id': 1, u'result': [u'null']}
+
+skipping_map_at_the_beginning = OrderedDict([
+  ("skipping_map_at_the_beginning", {"ttl": 123}),
+  ("id", 1),
+  ("method", "skipping_test"),
+  ("params", [])
+])
+result = post_success_pure(preset_method_location, skipping_map_at_the_beginning, {})
+assert (result == exp_res), "skipping_map_at_the_beginning"
+
+skipping_map_in_the_middle = OrderedDict([
+  ("id", 1),
+  ("skipping_map_in_the_middle", {"ttl": 123}),
+  ("method", "skipping_test"),
+  ("params", [])
+])
+result = post_success_pure(preset_method_location, skipping_map_in_the_middle, {})
+assert (result == exp_res), "skipping_map_in_the_middle"
+
+skipping_map_in_the_end = OrderedDict([
+  ("id", 1),
+  ("method", "skipping_test"),
+  ("params", []),
+  ("skipping_map_in_the_end", {"ttl": 123})
+])
+result = post_success_pure(preset_method_location, skipping_map_in_the_end, {})
+assert (result == exp_res), "skipping_map_in_the_end"
+
+skipping_array_at_the_beginning = OrderedDict([
+  ("skipping_array_at_the_beginning", ["ttl", 123]),
+  ("id", 1),
+  ("method", "skipping_test"),
+  ("params", []),
+  ("meta", ["ttl", 123])
+])
+result = post_success_pure(preset_method_location, skipping_array_at_the_beginning, {})
+assert (result == exp_res), "skipping_array_at_the_beginning"
+
+skipping_array_in_the_middle = OrderedDict([
+  ("id", 1),
+  ("method", "skipping_test"),
+  ("skipping_array_in_the_middle", ["ttl", 123]),
+  ("params", [])
+])
+result = post_success_pure(preset_method_location, skipping_array_in_the_middle, {})
+assert (result == exp_res), "skipping_array_in_the_middle"
+
+skipping_array_in_the_end = OrderedDict([
+  ("id", 1),
+  ("method", "skipping_test"),
+  ("params", []),
+  ("skipping_array_in_the_end", ["ttl", 123])
+])
+result = post_success_pure(preset_method_location, skipping_array_in_the_end, {})
+assert (result == exp_res), "skipping_array_in_the_end"
+
+skipping_map_with_nesting_1 = OrderedDict([
+  ("skipping_map_with_nesting_1", {"ttl": {"ttl": 123, "array":[]}}),
+  ("id", 1),
+  ("method", "skipping_test"),
+  ("params", [])
+])
+result = post_success_pure(preset_method_location, skipping_map_with_nesting_1, {})
+assert (result == exp_res), "skipping_map_with_nesting_1"
+
+skipping_array_with_nesting_2 = OrderedDict([
+  ("skipping_array_with_nesting_2", ["ttl", ["ttl", {"map": 123}]]),
+  ("id", 1),
+  ("method", "skipping_test"),
+  ("params", [])
+])
+result = post_success_pure(preset_method_location, skipping_array_with_nesting_2, {})
+assert (result == exp_res), "skipping_array_with_nesting_2"
+
+batch = [skipping_map_at_the_beginning, skipping_map_in_the_middle,
+         skipping_map_in_the_end, skipping_array_at_the_beginning,
+         skipping_array_in_the_middle, skipping_array_in_the_end,
+         skipping_map_with_nesting_1, skipping_array_with_nesting_2]
+result = post_success_pure(preset_method_location, batch, {})
+for item in result:
+  assert (item == exp_res), "batch"
+print('[+] OK')
